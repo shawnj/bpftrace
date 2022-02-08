@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: bpftrace
+  name: bpftrace
+spec:
+  containers:
+  - name: bpftrace
+    image: sjunell1643407/bpftrace:latest
+    imagePullPolicy: IfNotPresent
+    command: [ "/bin/sh", "-c"]
+    args: [ "/init.sh && bpftrace -e 'kprobe:do_sys_open { printf(\"%s: %s\\n\", comm, str(arg1)) } interval:s:2 { exit(); }'" ]
+    #command: [ "/bin/sh", "-c", "--" ]
+    #args: [ "while true; do sleep 30; done;" ]
+    securityContext:
+      capabilities:
+        add:
+        - SYS_PTRACE
+        - SYS_ADMIN
+      privileged: true
+    volumeMounts:
+    - mountPath: /host
+      name: host-root
+      readOnly: true
+    - mountPath: /sys
+      name: sys
+      readOnly: true
+  volumes:
+  - hostPath:
+      path: /
+      type: Directory
+    name: host-root
+  - hostPath:
+      path: /sys
+      type: Directory
+    name: sys
+
